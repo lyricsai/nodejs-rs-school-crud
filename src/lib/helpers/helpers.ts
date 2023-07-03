@@ -28,7 +28,7 @@ export const handleClusterRequest = (
 ) => {
   const proxyReq = request({
     host: "localhost",
-    port: port + workerIndex + 1,
+    port: Number(port) + workerIndex + 1,
     method: req.method,
     headers: req.headers,
     path: req.url,

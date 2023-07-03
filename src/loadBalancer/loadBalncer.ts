@@ -21,7 +21,7 @@ const loadBalancer = (port, instance) => {
 
       return nextPortIndex;
     };
-
+    console.log(numberParallelism);
     const sendToAllWorkers = (users) => {
       workers.forEach((worker) => {
         (worker as any).send(users);
@@ -29,23 +29,27 @@ const loadBalancer = (port, instance) => {
     };
 
     for (let index = 1; index <= numberParallelism; index += 1) {
-      const workerPort = startPort + index;
+      const workerPort = Number(startPort) + index;
       const worker = cluster.fork({ workerPort });
-      worker.on("message", (users) => {
-        sendToAllWorkers(users);
+      worker.on("message", (msg) => {
+        sendToAllWorkers(msg);
       });
+
       //@ts-ignore
       workers.push(worker);
     }
 
-    http
-      .createServer((req, res) => {
-        const workerIndex = getnextPortIndex();
-        handleClusterRequest(req, res, startPort, workerIndex);
-      })
-      .listen(startPort, () => {
-        `${instance} is running on the ${workers[nextPortIndex]} port`;
-      });
+    const serv = http.createServer((req, res) => {
+      const workerIndex = getnextPortIndex();
+      handleClusterRequest(req, res, startPort, workerIndex);
+    });
+
+    serv.listen(workers[nextPortIndex], () => {
+      console.log(workers[nextPortIndex]);
+      console.log(
+        `${instance} is running on the ${workers[nextPortIndex]} port`
+      );
+    });
   } else if (cluster.isWorker) {
     const port = process.env["workerPort"];
 
